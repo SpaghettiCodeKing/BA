@@ -8,16 +8,48 @@
 # LATIN Prompting
 #
 
+def split_after_eighth_comma(line):
+    # Find the position of the eighth comma
+    comma_positions = [pos for pos, char in enumerate(line) if char == ","]
+    
+    if len(comma_positions) < 8:
+        raise ValueError("The string does not contain eight commas.")
+    
+    # Split the string at the position after the eighth comma
+    split_position = comma_positions[7] + 1  # Add 1 to include the eighth comma
+    
+    # Extract the bbox and text parts
+    bbox = line[:split_position - 1]  # Everything before the eighth comma
+    text = line[split_position:]  # Everything after the eighth comma
+    
+    # Split the bbox into individual numbers
+    bbox_numbers = bbox.split(",")
+    
+    # Select the first two and last two numbers
+    selected_bbox = bbox_numbers[:2] + bbox_numbers[4:6]
+    selected_bbox = [int(num) for num in selected_bbox]
+    return selected_bbox, text
+
+# Example usage
+line = "12345678,87654321,12345678,87654321,12345678,87654321,12345678,87654321,TAN WOON YANN"
+bbox, text = split_after_eighth_comma(line)
+
+print("bbox:", bbox)
+print("text:", text)
+
 
 def to_prompt(scan, img_size) -> str:
     # Convert ocr bboxes to latin boxes
+    print("scan:")
+    print(scan)
     w, h = img_size
-    texts = [x["text"] for x in scan]
-    boxes = [x["bbox"] for x in scan]
-    boxes = [
-        [int(b.TLx * w), int(b.TLy * h), int(b.BRx * w), int(b.BRy * h)] for b in boxes
-    ]
-
+    texts = [x['text'] for x in scan]
+    boxes = [x['bbox'] for x in scan]
+    print("boxes:")
+    print(boxes)
+    print("texts:")
+    print(texts)    
+    
     # Now continue with the latin prompting from https://github.dev/WenjinW/LATIN-Prompt
     line_boxes = []
     line_texts = []
@@ -38,6 +70,9 @@ def to_prompt(scan, img_size) -> str:
         line_texts.append(line_text)
         if char_num >= max_line_char_num:
             max_line_char_num = char_num
+            print("line_union_box:")
+            print(line_union_box[2])
+            print("line_union_box:")
             line_width = line_union_box[2] - line_union_box[0]
 
     max_line_char_num = max(max_line_char_num, 1)
@@ -63,7 +98,6 @@ def _is_same_line(box1, box2):
         box1: [x1, y1, x2, y2]
         box2: [x1, y1, x2, y2]
     """
-
     box1_midy = (box1[1] + box1[3]) / 2
     box2_midy = (box2[1] + box2[3]) / 2
 
