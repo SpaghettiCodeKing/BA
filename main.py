@@ -1,5 +1,7 @@
 import os
 import Latin
+import json
+import prompt
 from PIL import Image
 
 
@@ -49,6 +51,44 @@ def latin_runner():
 def main():
     #######call to make all latin prompts
     #latin_runner()
+    path_latin = r"E:\uni\BA\data\input\latin"
+    path_instruction_latin = r"E:\uni\BA\data\input\latin\X00016469612.txt"
+    path_instruction_picture = r"E:\uni\BA\data\input\img\X00016469612.jpg"
+    path_entity = r"E:\uni\BA\data\input\entities\X00016469612.txt"
+    path_feed = r"E:\uni\BA\data\input\feed"
+
+    #load json for labels
+    with open(path_entity, 'r') as file:
+        data = file.read()  # Read the content of the file
+        labels = json.loads(data)  # Parse the content as JSON
+        instruction_labels = json.loads(data) 
+    for key in labels:
+        labels[key] = None  # or use None if you prefer
+
+    #load istruction document
+    ##as Latin
+    with open(path_instruction_latin, 'r') as file:
+        instruction_document = file.read()
+    ##as picture
+    # image = Image.open(path_instruction_picture)
+
+    #load feed
+    ##as Latin
+    data_documents = []
+    text_files = [os.path.join(path_feed, file) for file in os.listdir(path_feed) if file.endswith(".txt")]
+    
+    for file_path in text_files:
+        with open(file_path, 'r') as file:
+            content = file.read().strip()  # Read the content of the file and strip any extra whitespace
+            data_documents.append(content)  # Add the content to the list
+
+    #with open(path_feed, 'r') as file:
+     #   data_document = file.read()
+    ##as picture
+    #data_document = Image.open(path_feed)
+    
+    for entry in data_documents:
+        print(prompt.getPrompt(instruction_document, instruction_labels, entry, labels))
 
 
 if __name__ == "__main__":
