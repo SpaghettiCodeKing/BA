@@ -8,11 +8,14 @@
 # LATIN Prompting
 #
 
-def split_after_eighth_comma(line):
+def split_after_eighth_comma(line, filename):
     # Find the position of the eighth comma
     comma_positions = [pos for pos, char in enumerate(line) if char == ","]
-    
+    if len(line) == 0:
+        return [-1,-1,-1,-1], ""
     if len(comma_positions) < 8:
+        print(f"Error in file {filename}: The string does not contain eight commas.")
+        print(line)
         raise ValueError("The string does not contain eight commas.")
     
     # Split the string at the position after the eighth comma
@@ -30,25 +33,15 @@ def split_after_eighth_comma(line):
     selected_bbox = [int(num) for num in selected_bbox]
     return selected_bbox, text
 
-# Example usage
-line = "12345678,87654321,12345678,87654321,12345678,87654321,12345678,87654321,TAN WOON YANN"
-bbox, text = split_after_eighth_comma(line)
 
-print("bbox:", bbox)
-print("text:", text)
 
 
 def to_prompt(scan, img_size) -> str:
     # Convert ocr bboxes to latin boxes
-    print("scan:")
-    print(scan)
     w, h = img_size
     texts = [x['text'] for x in scan]
     boxes = [x['bbox'] for x in scan]
-    print("boxes:")
-    print(boxes)
-    print("texts:")
-    print(texts)    
+      
     
     # Now continue with the latin prompting from https://github.dev/WenjinW/LATIN-Prompt
     line_boxes = []
@@ -70,9 +63,6 @@ def to_prompt(scan, img_size) -> str:
         line_texts.append(line_text)
         if char_num >= max_line_char_num:
             max_line_char_num = char_num
-            print("line_union_box:")
-            print(line_union_box[2])
-            print("line_union_box:")
             line_width = line_union_box[2] - line_union_box[0]
 
     max_line_char_num = max(max_line_char_num, 1)
