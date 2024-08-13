@@ -2,7 +2,14 @@ import os
 import Latin
 import json
 import prompt
+from anls_star import anls_score
 from PIL import Image
+from IPython.display import display
+import asyncio
+
+def test():
+    anls = anls_score("Hello World", "Hello World")
+    print(anls)
 
 
 def latin_runner():
@@ -48,7 +55,7 @@ def latin_runner():
         image.close()
         box.close()
 
-def main():
+def prompt_runner():
     #######call to make all latin prompts
     #latin_runner()
     path_latin = r"E:\uni\BA\data\input\latin"
@@ -73,23 +80,68 @@ def main():
     # image = Image.open(path_instruction_picture)
 
     #load feed
+    data_documents = {}
     ##as Latin
-    data_documents = []
     text_files = [os.path.join(path_feed, file) for file in os.listdir(path_feed) if file.endswith(".txt")]
     
     for file_path in text_files:
         with open(file_path, 'r') as file:
             content = file.read().strip()  # Read the content of the file and strip any extra whitespace
-            data_documents.append(content)  # Add the content to the list
-
+            file_name = os.path.basename(file_path)
+            data_documents[file_name] = content  # Add the content to the dict
+    
     #with open(path_feed, 'r') as file:
      #   data_document = file.read()
     ##as picture
-    #data_document = Image.open(path_feed)
+    """
+    image_files = [os.path.join(path_feed, file) for file in os.listdir(path_feed) if file.endswith((".jpg", ".png", ".jpeg"))]
     
-    for entry in data_documents:
-        print(prompt.getPrompt(instruction_document, instruction_labels, entry, labels))
+    for file_path in image_files:
+        try:
+            with Image.open(file_path) as img:
+                img_copy = img.copy()
+                file_name = os.path.basename(file_path)
+                data_documents[file_name] = img.copy()  # Append a copy of the image object to the list
+                
+        except Exception as e:
+            print(f"Failed to load image {file_path}: {e}")
+    """
+    prompts = []
+    for key in data_documents:
+        prompt_value = prompt.getPrompt(instruction_document, instruction_labels, data_documents[key], labels)
+        prompts.append({key : prompt_value})
+    return prompts
+
+
+semaphore = asyncio.Semaphore(10)
+async def prompt_llm(prompt):
+    async with semaphore:
+        name = list(prompt.keys())[0]
+        value = prompt[name]   #this is the prompt
+        answer = ""##prompt for llm
+        print("Ho")
+        return {name : value}
+
+async def main():
+    output_path = r"E:\uni\BA\data\output"
+    prompts = prompt_runner()
+    ###how to get one entry
+    #first_entry = prompts[0]
+    #first_key = list(first_entry.keys())[0]
+    #print(first_entry[first_key])
+    avatiables = []
+    for prompt in prompts:
+        avatiables.append(await prompt_llm(prompt))
+        
+    for entry in avatiables:
+        print("hi")
+        key = next(iter(entry))
+        value = entry[key]
+        output_file_path = os.path.join(output_path, key)
+        with open(output_file_path, 'w') as output_file:
+            output_file.write(str(value))
+        
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
