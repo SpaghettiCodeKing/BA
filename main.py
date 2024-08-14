@@ -132,6 +132,8 @@ async def prompt_llm(prompt):
         return {name : value}
 
 async def main():
+    my_secret = os.getenv("GEMINI")
+    print(my_secret)
     #######call to make all latin prompts
     #latin_runner()
     #PC
