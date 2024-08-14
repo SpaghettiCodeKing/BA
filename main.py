@@ -6,7 +6,12 @@ from anls_star import anls_score
 from PIL import Image
 from IPython.display import display
 import asyncio
+import google.generativeai as genai
 
+file_path = r"C:\Users\elias\Desktop\BAImportant.txt"
+with open(file_path, 'r') as file:
+        GEMINI = file.read()
+genai.configure(api_key=GEMINI)
 
 def test():
     anls = anls_score("Hello World", "Hello World")
@@ -123,17 +128,32 @@ def prompt_runner():
 
 
 semaphore = asyncio.Semaphore(10)
-async def prompt_llm(prompt):
+
+async def prompt_llm(prompt,  time_interval):
     async with semaphore:
         name = list(prompt.keys())[0]
-        value = prompt[name]   #this is the prompt
-        answer = ""##prompt for llm
-        print("Ho")
-        return {name : value}
+        promptAI = prompt[name]   #this is the prompt
+        generation_config = {
+        "temperature": 1,
+        "top_p": 0.95,
+        "top_k": 64,
+        "max_output_tokens": 8192,
+        "response_mime_type": "text/plain",
+        }
+        model = genai.GenerativeModel(
+        model_name="gemini-1.5-pro",
+        generation_config=generation_config,
+        )
+        chat_session = model.start_chat(
+        history=[
+        ]
+        )
+        answer = chat_session.send_message(promptAI)
+        await asyncio.sleep(time_interval)
+        return {name : answer}
 
 async def main():
-    my_secret = os.getenv("GEMINI")
-    print(my_secret)
+    
     #######call to make all latin prompts
     #latin_runner()
     #PC
@@ -146,12 +166,12 @@ async def main():
     #first_entry = prompts[0]
     #first_key = list(first_entry.keys())[0]
     #print(first_entry[first_key])
+
+    time_interval = 60/14
     avatiables = []
-    for prompt in prompts:
-        avatiables.append(await prompt_llm(prompt))
-        
+    avatiables = await asyncio.gather(*(prompt_llm(prompt, time_interval) for prompt in prompts))   
+    
     for entry in avatiables:
-        print("hi")
         key = next(iter(entry))
         value = entry[key]
         output_file_path = os.path.join(output_path, key)
