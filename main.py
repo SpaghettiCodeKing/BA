@@ -7,6 +7,7 @@ from PIL import Image
 from IPython.display import display
 import asyncio
 
+
 def test():
     anls = anls_score("Hello World", "Hello World")
     print(anls)
@@ -56,13 +57,21 @@ def latin_runner():
         box.close()
 
 def prompt_runner():
-    #######call to make all latin prompts
-    #latin_runner()
-    path_latin = r"E:\uni\BA\data\input\latin"
-    path_instruction_latin = r"E:\uni\BA\data\input\latin\X00016469612.txt"
-    path_instruction_picture = r"E:\uni\BA\data\input\img\X00016469612.jpg"
-    path_entity = r"E:\uni\BA\data\input\entities\X00016469612.txt"
-    path_feed = r"E:\uni\BA\data\input\feed"
+    
+    #PC
+    #path_latin = r"E:\uni\BA\data\input\latin"
+    #path_instruction_latin = r"E:\uni\BA\data\input\latin\X00016469612.txt"
+    #path_instruction_picture = r"E:\uni\BA\data\input\img\X00016469612.jpg"
+    #path_entity = r"E:\uni\BA\data\input\entities\X00016469612.txt"
+    #path_feed = r"E:\uni\BA\data\input\feed"
+
+    #Laptop
+    path_latin = r"C:\Users\elias\Documents\GitHub\BA\data\input\latin"
+    path_instruction_latin = r"C:\Users\elias\Documents\GitHub\BA\data\input\latin\X00016469612.txt"
+    path_instruction_picture = r"C:\Users\elias\Documents\GitHub\BA\data\input\img\X00016469612.jpg"
+    path_entity = r"C:\Users\elias\Documents\GitHub\BA\data\input\entities\X00016469612.txt"
+    path_feed = r"C:\Users\elias\Documents\GitHub\BA\data\input\feed"
+
 
     #load json for labels
     with open(path_entity, 'r') as file:
@@ -123,7 +132,13 @@ async def prompt_llm(prompt):
         return {name : value}
 
 async def main():
-    output_path = r"E:\uni\BA\data\output"
+    #######call to make all latin prompts
+    #latin_runner()
+    #PC
+    #output_path = r"E:\uni\BA\data\output"
+    #Laptop
+    output_path = r"C:\Users\elias\Documents\GitHub\BA\data\output"
+
     prompts = prompt_runner()
     ###how to get one entry
     #first_entry = prompts[0]
