@@ -2,7 +2,7 @@ import os
 import Latin
 import json
 import prompt
-
+import evaluation
 from PIL import Image
 from IPython.display import display
 import asyncio
@@ -193,11 +193,11 @@ async def main():
     #######call to make all latin prompts
     #latin_runner()
     #######call to make the prompts
-    await prompt_orchestrator()
+    #await prompt_orchestrator()
 
     #preparation.choose_50()
     #preparation.get_matching_pictures()
-    
+    evaluation.evaluation_orchestrator()
 
 
 if __name__ == "__main__":

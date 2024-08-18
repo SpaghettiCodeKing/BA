@@ -17,14 +17,14 @@ def choose_50():
 
 
 def get_matching_pictures():
-      to_pick_from = r"E:\uni\BA\data\input\topickfrom"
-      txt = r"E:\uni\BA\data\input\latin"
-      output = r"E:\uni\BA\data\input\img"
+      to_pick_from = r"E:\uni\BA\data\input\feed"
+      txt = r"E:\uni\BA\data\input\latinExtract"
+      output = r"E:\uni\BA\data\input\entitiesExtract"
       
       txt_files = {os.path.splitext(f)[0] for f in os.listdir(txt) if os.path.isfile(os.path.join(txt, f)) and f.endswith('.txt')}
       
       for png_file in os.listdir(to_pick_from):
-        if png_file.endswith('.jpg'):
+        if png_file.endswith('.txt'):
             png_file_base = os.path.splitext(png_file)[0]
             if png_file_base in txt_files:
                 # Copy the matching png file to the destination folder
