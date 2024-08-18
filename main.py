@@ -2,20 +2,20 @@ import os
 import Latin
 import json
 import prompt
-from anls_star import anls_score
+
 from PIL import Image
 from IPython.display import display
 import asyncio
 import google.generativeai as genai
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
+import preparation
 
-file_path = r"C:\Users\elias\Desktop\BAImportant.txt"
+
 with open(file_path, 'r') as file:
         GEMINI = file.read()
 genai.configure(api_key=GEMINI)
 
-def test():
-    anls = anls_score("Hello World", "Hello World")
-    print(anls)
+
 
 
 def latin_runner():
@@ -64,18 +64,18 @@ def latin_runner():
 def prompt_runner():
     
     #PC
-    #path_latin = r"E:\uni\BA\data\input\latin"
-    #path_instruction_latin = r"E:\uni\BA\data\input\latin\X00016469612.txt"
-    #path_instruction_picture = r"E:\uni\BA\data\input\img\X00016469612.jpg"
-    #path_entity = r"E:\uni\BA\data\input\entities\X00016469612.txt"
-    #path_feed = r"E:\uni\BA\data\input\feed"
+    path_latin = r"E:\uni\BA\data\input\latin"
+    path_instruction_latin = r"E:\uni\BA\data\input\latin\X51005268408.txt"
+    path_instruction_picture = r"E:\uni\BA\data\input\img\X00016469612.jpg"
+    path_entity = r"E:\uni\BA\data\input\entities\X51005268408.txt"
+    path_feed = r"E:\uni\BA\data\input\feed"
 
     #Laptop
-    path_latin = r"C:\Users\elias\Documents\GitHub\BA\data\input\latin"
-    path_instruction_latin = r"C:\Users\elias\Documents\GitHub\BA\data\input\latin\X00016469612.txt"
-    path_instruction_picture = r"C:\Users\elias\Documents\GitHub\BA\data\input\img\X00016469612.jpg"
-    path_entity = r"C:\Users\elias\Documents\GitHub\BA\data\input\entities\X00016469612.txt"
-    path_feed = r"C:\Users\elias\Documents\GitHub\BA\data\input\feed"
+    #path_latin = r"C:\Users\elias\Documents\GitHub\BA\data\input\latin"
+    #path_instruction_latin = r"C:\Users\elias\Documents\GitHub\BA\data\input\latin\X00016469612.txt"
+    #path_instruction_picture = r"C:\Users\elias\Documents\GitHub\BA\data\input\img\X00016469612.jpg"
+    #path_entity = r"C:\Users\elias\Documents\GitHub\BA\data\input\entities\X00016469612.txt"
+    #path_feed = r"C:\Users\elias\Documents\GitHub\BA\data\input\feed"
 
 
     #load json for labels
@@ -124,15 +124,17 @@ def prompt_runner():
     for key in data_documents:
         prompt_value = prompt.getPrompt(instruction_document, instruction_labels, data_documents[key], labels)
         prompts.append({key : prompt_value})
+        #print(prompt_value)
     return prompts
 
 
-semaphore = asyncio.Semaphore(10)
+semaphore = asyncio.Semaphore(40)
 
 async def prompt_llm(prompt,  time_interval):
     async with semaphore:
         name = list(prompt.keys())[0]
         promptAI = prompt[name]   #this is the prompt
+        print(name)
         generation_config = {
         "temperature": 1,
         "top_p": 0.95,
@@ -143,6 +145,7 @@ async def prompt_llm(prompt,  time_interval):
         model = genai.GenerativeModel(
         model_name="gemini-1.5-pro",
         generation_config=generation_config,
+        safety_settings = {HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE}
         )
         chat_session = model.start_chat(
         history=[
@@ -152,14 +155,11 @@ async def prompt_llm(prompt,  time_interval):
         await asyncio.sleep(time_interval)
         return {name : answer}
 
-async def main():
-    
-    #######call to make all latin prompts
-    #latin_runner()
+async def prompt_orchestrator():
     #PC
-    #output_path = r"E:\uni\BA\data\output"
+    output_path = r"E:\uni\BA\data\output"
     #Laptop
-    output_path = r"C:\Users\elias\Documents\GitHub\BA\data\output"
+    #output_path = r"C:\Users\elias\Documents\GitHub\BA\data\output"
 
     prompts = prompt_runner()
     ###how to get one entry
@@ -167,17 +167,37 @@ async def main():
     #first_key = list(first_entry.keys())[0]
     #print(first_entry[first_key])
 
-    time_interval = 60/14
+    batch_size = 25
+    batches = [prompts[i:i + batch_size] for i in range(0, len(prompts) - 23, batch_size)]
+    batches.append(prompts[-23:])  # Add the last batch of 23 prompts
+
+    time_interval = 60 / 100
     avatiables = []
-    avatiables = await asyncio.gather(*(prompt_llm(prompt, time_interval) for prompt in prompts))   
+    print(len(batches))
+# Process each batch separately
+    for batch in batches:
+        avatiables_batch = batch #await asyncio.gather(*(prompt_llm(prompt, time_interval) for prompt in batch))
+        avatiables.extend(avatiables_batch) 
+        print("batch done") 
+        await asyncio.sleep(10)
+        for entry in avatiables:
+            key = next(iter(entry))
+            value = entry[key]
+            output_file_path = os.path.join(output_path, key)
+            with open(output_file_path, 'w') as output_file:
+                output_file.write(str(value))
+        avatiables = []
+
+async def main():
     
-    for entry in avatiables:
-        key = next(iter(entry))
-        value = entry[key]
-        output_file_path = os.path.join(output_path, key)
-        with open(output_file_path, 'w') as output_file:
-            output_file.write(str(value))
-        
+    #######call to make all latin prompts
+    #latin_runner()
+    #######call to make the prompts
+    await prompt_orchestrator()
+
+    #preparation.choose_50()
+    #preparation.get_matching_pictures()
+    
 
 
 if __name__ == "__main__":
