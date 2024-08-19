@@ -13,8 +13,8 @@ label: total - The total amount of the receip. Only one is correct. Format to 2 
       transition_to_extraction = "This is the document you must extract the information from:"
       json_to_extract = "Replace all None with the correct information:"
       #one-shot
-      print(f"{introduction}\n{instruction_document}\n{explanation_results}\n{instruction_labels}\n{transition_to_extraction}\n{document}\n{json_to_extract}\n{labels}")
-      return f"{introduction}\n{instruction_document}\n{explanation_results}\n{instruction_labels}\n{transition_to_extraction}\n{document}\n{json_to_extract}\n{labels}"
+      #print(f"{introduction}\n{instruction_document}\n{explanation_results}\n{instruction_labels}\n{transition_to_extraction}\n{document}\n{json_to_extract}\n{labels}")
+      #return f"{introduction}\n{instruction_document}\n{explanation_results}\n{instruction_labels}\n{transition_to_extraction}\n{document}\n{json_to_extract}\n{labels}"
       #zero-shot
-      #print(f"{introduction}\n{transition_to_extraction}\n{document}\n{json_to_extract}\n{labels}")
-      #return f"{introduction}\n{transition_to_extraction}\n{document}\n{json_to_extract}\n{labels}"
+      print(f"{introduction}\n{transition_to_extraction}\n{document}\n{json_to_extract}\n{labels}")
+      return f"{introduction}\n{transition_to_extraction}\n{document}\n{json_to_extract}\n{labels}"

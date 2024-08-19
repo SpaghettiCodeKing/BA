@@ -152,8 +152,9 @@ async def prompt_llm(prompt,  time_interval):
         ]
         )
         answer = chat_session.send_message(promptAI)
+        text_response = answer._result.candidates[0].content.parts[0].text
         await asyncio.sleep(time_interval)
-        return {name : answer}
+        return {name : text_response}
 
 async def prompt_orchestrator():
     #PC
@@ -176,7 +177,7 @@ async def prompt_orchestrator():
     print(len(batches))
 # Process each batch separately
     for batch in batches:
-        avatiables_batch = batch #await asyncio.gather(*(prompt_llm(prompt, time_interval) for prompt in batch))
+        avatiables_batch = await asyncio.gather(*(prompt_llm(prompt, time_interval) for prompt in batch))
         avatiables.extend(avatiables_batch) 
         print("batch done") 
         await asyncio.sleep(10)
@@ -192,12 +193,15 @@ async def main():
     
     #######call to make all latin prompts
     #latin_runner()
+
     #######call to make the prompts
-    #await prompt_orchestrator()
+    await prompt_orchestrator()
 
     #preparation.choose_50()
     #preparation.get_matching_pictures()
-    evaluation.evaluation_orchestrator()
+    #preparation.correct_price_format()
+    ###evaluation
+    #evaluation.evaluation_orchestrator()
 
 
 if __name__ == "__main__":

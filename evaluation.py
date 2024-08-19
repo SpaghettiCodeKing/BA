@@ -2,6 +2,7 @@ from anls_star import anls_score
 import os
 import ast
 import json
+import re
 from sklearn.metrics import precision_score, recall_score, f1_score
 
 input_folder = r"E:\uni\BA\data\input\feed"
@@ -9,8 +10,7 @@ entity_folder = r"E:\uni\BA\data\input\entitiesExtract"
 values_list_prompts = []
 values_list_entities = []
 
-
-
+"""
 def extract_values_from_text(text_content):
     result_dict = {}
     
@@ -48,7 +48,7 @@ def extract_values_from_text(text_content):
                 # Add to dictionary
                 result_dict[key] = value
 
-    return result_dict
+    return result_dict"""
 
 
 def extract_values_from_entity(data):   
@@ -67,7 +67,8 @@ def extract_from_prompt():
                         text_content = file.read()
 
             # Assuming the text content is exactly what you provided earlier
-            values = extract_values_from_text(text_content)
+            values = ast.literal_eval(text_content)
+            print(values)
             values_list_prompts.append(values)
       
 
@@ -98,6 +99,18 @@ def compare_folders():
         print("The following files are in Folder A but not in Folder B:")
         for file in missing_files:
             print(file)
+
+
+def clean_strings(strings):
+    cleaned_strings = []
+    for s in strings:
+        # Replace ",," with ","
+        s = s.replace(",,", ",")
+        # Replace multiple white spaces with a single white space
+        s = re.sub(r'\s+', ' ', s)
+        # Append the cleaned string to the list
+        cleaned_strings.append(s.strip())  # .strip() removes leading/trailing whitespace if necessary
+    return cleaned_strings
       
 
 def evaluation_orchestrator():
@@ -119,6 +132,8 @@ def evaluation_orchestrator():
             # Extracting values from the dictionaries
             entities_values = list(entities.values())
             prompts_values = list(prompts.values())
+            prompts_values = clean_strings(prompts_values)
+            
             
             # ANLS computations using only the values
             anls = anls_score(entities_values, prompts_values)
@@ -128,7 +143,11 @@ def evaluation_orchestrator():
             key_1 = 'date'
             key_2 = 'address'
             key_3 = 'total'
-            
+
+            #test if all keys are in the dictionary
+            allowed_keys = ['company', 'date', 'address', 'total']
+            if not set(prompts.keys()).issubset(allowed_keys):
+                print(dictionary)
             #anls computations
             anls_score_0.append(anls_score(entities.get(key_0, ''), prompts.get(key_0, '')))
             anls_score_1.append(anls_score(entities.get(key_1, ''), prompts.get(key_1, '')))
@@ -157,21 +176,21 @@ def evaluation_orchestrator():
             f1.append(f1_score(gt_labels, ev_labels))
             
       print(" anls* final average score over all labels:")
-      print(sum(anls_scores_all_labels)/len(anls_scores_all_labels))
+      print(round(sum(anls_scores_all_labels)/len(anls_scores_all_labels),2))
       print(" anls* final average score for company:")
-      print(sum(anls_score_0)/len(anls_score_0))
+      print(round(sum(anls_score_0)/len(anls_score_0),2))
       print(" anls* final average score for label date:")
-      print(sum(anls_score_1)/len(anls_score_1))
+      print(round(sum(anls_score_1)/len(anls_score_1),2))
       print(" anls* final average score for label address:")
-      print(sum(anls_score_2)/len(anls_score_2))
+      print(round(sum(anls_score_2)/len(anls_score_2),2))
       print(" anls* final average score for label total:")
-      print(sum(anls_score_3)/len(anls_score_3))
+      print(round(sum(anls_score_3)/len(anls_score_3),2))
       print("precision:")
-      print(sum(precision)/len(precision))
+      print(round(sum(precision)/len(precision),2))
       print("recall:")
-      print(sum(recall)/len(recall))
+      print(round(sum(recall)/len(recall),2))
       print("f1:")
-      print(sum(f1)/len(f1))
+      print(round(sum(f1)/len(f1),2))
 
             
       
