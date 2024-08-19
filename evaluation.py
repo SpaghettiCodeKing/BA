@@ -9,6 +9,7 @@ input_folder = r"E:\uni\BA\data\input\feed"
 entity_folder = r"E:\uni\BA\data\input\entitiesExtract"
 values_list_prompts = []
 values_list_entities = []
+banned_files = []
 
 """
 def extract_values_from_text(text_content):
@@ -66,22 +67,37 @@ def extract_from_prompt():
                   with open(file_path, 'r') as file:
                         text_content = file.read()
 
-            # Assuming the text content is exactly what you provided earlier
-            values = ast.literal_eval(text_content)
-            print(values)
-            values_list_prompts.append(values)
+#post processing
+            # Attempt to extract the dictionary-like content using regex
+            match = re.search(r'\{.*\}', text_content, re.DOTALL)
+            if match:
+                text_content = match.group(0)
+                try:
+                    values = ast.literal_eval(text_content)
+                except Exception as e:
+                    print(f"Error in file {filename}: {e}")
+                    banned_files.append(filename)   
+                    values = None
+            
+            if values is not None:
+                values_list_prompts.append(values)
       
 
 def extract_from_entity():
-      for filename in os.listdir(entity_folder):
+    print(banned_files)
+    for filename in os.listdir(entity_folder):
+        if filename not in banned_files:
             file_path = os.path.join(entity_folder, filename)
             if os.path.isfile(file_path):
-                  with open(file_path, 'r') as file:
-                        text_content = file.read()
-
-            # Assuming the text content is exactly what you provided earlier
+                with open(file_path, 'r') as file:
+                    text_content = file.read()
+                # Assuming the text content is exactly what you provided earlier
             values = extract_values_from_entity(text_content)
             values_list_entities.append(values)
+        else:
+            print(f"Skipping file {filename} due to previous errors")
+
+            
 
 
 
@@ -114,83 +130,84 @@ def clean_strings(strings):
       
 
 def evaluation_orchestrator():
-      anls_scores_all_labels = []
-      anls_score_0 = []
-      anls_score_1 = []
-      anls_score_2 = []
-      anls_score_3 = []
+    anls_scores_all_labels = []
+    anls_score_0 = []
+    anls_score_1 = []
+    anls_score_2 = []
+    anls_score_3 = []
       
-      precision = []
-      recall = []
-      f1 = []
+    precision = []
+    recall = []
+    f1 = []
       
-      extract_from_prompt()
-      extract_from_entity()
-      for entities, prompts in zip(values_list_entities, values_list_prompts):
-            entities_keys = list(entities.keys())
-            prompts_keys = list(prompts.keys())
-            # Extracting values from the dictionaries
-            entities_values = list(entities.values())
-            prompts_values = list(prompts.values())
-            prompts_values = clean_strings(prompts_values)
+    extract_from_prompt()
+    extract_from_entity()
+    for entities, prompts in zip(values_list_entities, values_list_prompts):
+        entities_keys = list(entities.keys())
+        prompts_keys = list(prompts.keys())
+        # Extracting values from the dictionaries
+        entities_values = list(entities.values())
+        prompts_values = list(prompts.values())
+
+##post processing
+        prompts_values = clean_strings(prompts_values)
             
             
-            # ANLS computations using only the values
-            anls = anls_score(entities_values, prompts_values)
-            anls_scores_all_labels.append(anls)
+        # ANLS computations using only the values
+        anls = anls_score(entities_values, prompts_values)
+        anls_scores_all_labels.append(anls)
 
-            key_0 = 'company'
-            key_1 = 'date'
-            key_2 = 'address'
-            key_3 = 'total'
+        key_0 = 'company'
+        key_1 = 'date'
+        key_2 = 'address'
+        key_3 = 'total'
 
-            #test if all keys are in the dictionary
-            allowed_keys = ['company', 'date', 'address', 'total']
-            if not set(prompts.keys()).issubset(allowed_keys):
-                print(dictionary)
+        #test if all keys are in the dictionary
+        allowed_keys = ['company', 'date', 'address', 'total']
+        if not set(prompts.keys()).issubset(allowed_keys):
+            print(dictionary)
             #anls computations
-            anls_score_0.append(anls_score(entities.get(key_0, ''), prompts.get(key_0, '')))
-            anls_score_1.append(anls_score(entities.get(key_1, ''), prompts.get(key_1, '')))
-            anls_score_2.append(anls_score(entities.get(key_2, ''), prompts.get(key_2, '')))
-            anls_score_3.append(anls_score(entities.get(key_3, ''), prompts.get(key_3, '')))
+        anls_score_0.append(anls_score(entities.get(key_0, ''), prompts.get(key_0, '')))
+        anls_score_1.append(anls_score(entities.get(key_1, ''), prompts.get(key_1, '')))
+        anls_score_2.append(anls_score(entities.get(key_2, ''), prompts.get(key_2, '')))
+        anls_score_3.append(anls_score(entities.get(key_3, ''), prompts.get(key_3, '')))
 
-            """if anls < 0.75:
-                  print(entities)
-                  print(prompts)
-                  print(anls)"""
-            anls_scores_all_labels.append(anls)
-            #precision, recall, f1
-             # Convert the dictionaries to sets of keys
-            gt_keys = set(entities.keys())            
-            ev_keys = set(prompts.keys())        
-            # Union of all keys to get a comprehensive list
-            all_keys = list(gt_keys.union(ev_keys))
+        """if anls < 0.75:
+            print(entities)
+            print(prompts)
+            print(anls)"""
+        #precision, recall, f1
+        # Convert the dictionaries to sets of keys
+        gt_keys = set(entities.keys())            
+        ev_keys = set(prompts.keys())        
+        # Union of all keys to get a comprehensive list
+        all_keys = list(gt_keys.union(ev_keys))
 
-            # Create binary labels for the presence of keys
-            gt_labels = [entities.get(key) == prompts.get(key) for key in all_keys]
-            ev_labels = [key in ev_keys for key in all_keys]
+        # Create binary labels for the presence of keys
+        gt_labels = [entities.get(key) == prompts.get(key) for key in all_keys]
+        ev_labels = [key in ev_keys for key in all_keys]
 
-            # Calculate precision, recall, and F1 score
-            precision.append(precision_score(gt_labels, ev_labels))
-            recall.append(recall_score(gt_labels, ev_labels))
-            f1.append(f1_score(gt_labels, ev_labels))
-            
-      print(" anls* final average score over all labels:")
-      print(round(sum(anls_scores_all_labels)/len(anls_scores_all_labels),2))
-      print(" anls* final average score for company:")
-      print(round(sum(anls_score_0)/len(anls_score_0),2))
-      print(" anls* final average score for label date:")
-      print(round(sum(anls_score_1)/len(anls_score_1),2))
-      print(" anls* final average score for label address:")
-      print(round(sum(anls_score_2)/len(anls_score_2),2))
-      print(" anls* final average score for label total:")
-      print(round(sum(anls_score_3)/len(anls_score_3),2))
-      print("precision:")
-      print(round(sum(precision)/len(precision),2))
-      print("recall:")
-      print(round(sum(recall)/len(recall),2))
-      print("f1:")
-      print(round(sum(f1)/len(f1),2))
+        # Calculate precision, recall, and F1 score
+        precision.append(precision_score(gt_labels, ev_labels, zero_division=0))
+        recall.append(recall_score(gt_labels, ev_labels, zero_division=0))
+        f1.append(f1_score(gt_labels, ev_labels, zero_division=0))
+    print(len(values_list_prompts))
+    print(" anls* final average score over all labels:")
+    print(round(sum(anls_scores_all_labels)/len(anls_scores_all_labels),2))
+    print(" anls* final average score for company:")
+    print(round(sum(anls_score_0)/len(anls_score_0),2))
+    print(" anls* final average score for label date:")
+    print(round(sum(anls_score_1)/len(anls_score_1),2))
+    print(" anls* final average score for label address:")
+    print(round(sum(anls_score_2)/len(anls_score_2),2))
+    print(" anls* final average score for label total:")
+    print(round(sum(anls_score_3)/len(anls_score_3),2))
+    print("precision:")
+    print(round(sum(precision)/len(precision),2))
+    print("recall:")
+    print(round(sum(recall)/len(recall),2))
+    print("f1:")
+    print(round(sum(f1)/len(f1),2))
 
             
       

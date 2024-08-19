@@ -2,6 +2,8 @@ import os
 import shutil
 import random
 import json
+import re
+import ast
 
 def choose_50():
 
@@ -69,3 +71,33 @@ def correct_price_format():
                     # Write the corrected data back to the file
     with open(file_path, 'w') as file:
       json.dump(data, file, indent=4)
+
+
+
+def load_and_check_documents():
+    directory_path = r"E:\uni\BA\data\input\entitiesExtract"
+    # Iterate over all files in the specified directory
+    for filename in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, filename)
+        
+        # Ensure we're working with a file, not a subdirectory
+        if os.path.isfile(file_path):
+            with open(file_path, 'r') as file:
+                text_content = file.read()
+            
+            # Use regex to extract the dictionary-like content
+            match = re.search(r'\{.*\}', text_content, re.DOTALL)
+            if match:
+                dict_string = match.group(0)
+                try:
+                    # Safely evaluate the string to a dictionary
+                    data_dict = ast.literal_eval(dict_string)
+                    
+                    # Check if the dictionary has exactly 4 keys
+                    if len(data_dict) != 4:
+                        print(f"File '{filename}' does not have 4 keys. It has {len(data_dict)} keys.")
+                except Exception as e:
+                    print(f"Error processing file '{filename}': {e}")
+            else:
+                print(f"File '{filename}' does not contain a valid dictionary.")
+

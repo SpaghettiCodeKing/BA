@@ -195,13 +195,14 @@ async def main():
     #latin_runner()
 
     #######call to make the prompts
-    await prompt_orchestrator()
+    #await prompt_orchestrator()
 
     #preparation.choose_50()
     #preparation.get_matching_pictures()
     #preparation.correct_price_format()
+    #preparation.load_and_check_documents()
     ###evaluation
-    #evaluation.evaluation_orchestrator()
+    evaluation.evaluation_orchestrator()
 
 
 if __name__ == "__main__":
