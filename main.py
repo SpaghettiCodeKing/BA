@@ -65,10 +65,13 @@ def prompt_runner():
     
     #PC
     path_latin = r"E:\uni\BA\data\input\latin"
-    path_instruction_latin = r"E:\uni\BA\data\input\latin\X51005268408.txt"
+    path_instruction_latin = r"E:\uni\BA\data\input\latin"
     path_instruction_picture = r"E:\uni\BA\data\input\img\X00016469612.jpg"
-    path_entity = r"E:\uni\BA\data\input\entities\X51005268408.txt"
+    path_entity = r"E:\uni\BA\data\input\entities"
     path_feed = r"E:\uni\BA\data\input\feed"
+    instruction_documents = []
+    instruction_labels = [] 
+    amount_of_instruction_documents = 10
 
     #Laptop
     #path_latin = r"C:\Users\elias\Documents\GitHub\BA\data\input\latin"
@@ -79,35 +82,58 @@ def prompt_runner():
 
 
     #load json for labels
-    with open(path_entity, 'r') as file:
-        data = file.read()  # Read the content of the file
-        labels = json.loads(data)  # Parse the content as JSON
-        instruction_labels = json.loads(data) 
+    # Get the list of files in the directory
+    files = os.listdir(path_entity)
+    
+    # Only process the first 'x' files (or fewer if there aren't enough files)
+    """for filename in files[:amount_of_instruction_documents]:
+        file_path = os.path.join(path_entity, filename)
+        
+        if os.path.isfile(file_path):
+            with open(file_path, 'r') as file:
+                content = file.read()
+                # Append the content to the instruction_documents list
+                instruction_labels.append(content)"""
+    #get the labels for showing the LLM what to extract
+    first_entry = files[0]
+    first_entry_path = os.path.join(path_entity, first_entry)
+    with open(first_entry_path, 'r') as file:
+         labels = json.loads(file.read())
     for key in labels:
-        labels[key] = None  # or use None if you prefer
-
+        labels[key] = None  
+    """
     #load istruction document
     ##as Latin
-    with open(path_instruction_latin, 'r') as file:
-        instruction_document = file.read()
-    ##as picture
-    # image = Image.open(path_instruction_picture)
+    # Get the list of files in the directory
+    files = os.listdir(path_instruction_latin)
+    
+    # Only process the first 'x' files (or fewer if there aren't enough files)
+    for filename in files[:amount_of_instruction_documents]:
+        file_path = os.path.join(path_instruction_latin, filename)
+        
+        if os.path.isfile(file_path):
+            with open(file_path, 'r') as file:
+                content = file.read()
+                # Append the content to the instruction_documents list
+                instruction_documents.append(content)
+    """##as picture
+    #image = Image.open(path_instruction_picture)
 
     #load feed
     data_documents = {}
     ##as Latin
-    text_files = [os.path.join(path_feed, file) for file in os.listdir(path_feed) if file.endswith(".txt")]
+    """text_files = [os.path.join(path_feed, file) for file in os.listdir(path_feed) if file.endswith(".txt")]
     
     for file_path in text_files:
         with open(file_path, 'r') as file:
             content = file.read().strip()  # Read the content of the file and strip any extra whitespace
             file_name = os.path.basename(file_path)
-            data_documents[file_name] = content  # Add the content to the dict
+            data_documents[file_name] = content  # Add the content to the dict"""
     
     #with open(path_feed, 'r') as file:
      #   data_document = file.read()
     ##as picture
-    """
+    
     image_files = [os.path.join(path_feed, file) for file in os.listdir(path_feed) if file.endswith((".jpg", ".png", ".jpeg"))]
     
     for file_path in image_files:
@@ -116,44 +142,48 @@ def prompt_runner():
                 img_copy = img.copy()
                 file_name = os.path.basename(file_path)
                 data_documents[file_name] = img.copy()  # Append a copy of the image object to the list
-                
+                #print(f"Loaded image {file_path}")
         except Exception as e:
             print(f"Failed to load image {file_path}: {e}")
-    """
+    
     prompts = []
     for key in data_documents:
-        prompt_value = prompt.getPrompt(instruction_document, instruction_labels, data_documents[key], labels)
+        prompt_value = []
+        prompt_value.append(prompt.getPrompt(instruction_documents, instruction_labels, key, labels))
+        prompt_value.append(data_documents[key])
         prompts.append({key : prompt_value})
         #print(prompt_value)
     return prompts
 
-
-semaphore = asyncio.Semaphore(40)
-
+semaphore = asyncio.Semaphore(7)
 async def prompt_llm(prompt,  time_interval):
     async with semaphore:
         name = list(prompt.keys())[0]
-        promptAI = prompt[name]   #this is the prompt
-        print(name)
+        promptAI = prompt[name][0]   #this is the prompt
+        image = prompt[name][1]  #this is the image
+        
         generation_config = {
         "temperature": 1,
         "top_p": 0.95,
         "top_k": 64,
         "max_output_tokens": 8192,
         "response_mime_type": "text/plain",
+        
         }
         model = genai.GenerativeModel(
         model_name="gemini-1.5-pro",
         generation_config=generation_config,
-        safety_settings = {HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE}
+        safety_settings = {HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE},
+        
         )
         chat_session = model.start_chat(
         history=[
         ]
         )
-        answer = chat_session.send_message(promptAI)
+        answer = chat_session.send_message([promptAI, image])
         text_response = answer._result.candidates[0].content.parts[0].text
         await asyncio.sleep(time_interval)
+        
         return {name : text_response}
 
 async def prompt_orchestrator():
@@ -171,8 +201,7 @@ async def prompt_orchestrator():
     batch_size = 25
     batches = [prompts[i:i + batch_size] for i in range(0, len(prompts) - 23, batch_size)]
     batches.append(prompts[-23:])  # Add the last batch of 23 prompts
-
-    time_interval = 60 / 100
+    time_interval = 60 / 300
     avatiables = []
     print(len(batches))
 # Process each batch separately
@@ -180,10 +209,12 @@ async def prompt_orchestrator():
         avatiables_batch = await asyncio.gather(*(prompt_llm(prompt, time_interval) for prompt in batch))
         avatiables.extend(avatiables_batch) 
         print("batch done") 
-        await asyncio.sleep(10)
+        await asyncio.sleep(5)
         for entry in avatiables:
             key = next(iter(entry))
+            
             value = entry[key]
+            key = key.replace(".jpg", ".txt")
             output_file_path = os.path.join(output_path, key)
             with open(output_file_path, 'w') as output_file:
                 output_file.write(str(value))
@@ -195,14 +226,14 @@ async def main():
     #latin_runner()
 
     #######call to make the prompts
-    #await prompt_orchestrator()
+    await prompt_orchestrator()
 
     #preparation.choose_50()
     #preparation.get_matching_pictures()
     #preparation.correct_price_format()
     #preparation.load_and_check_documents()
     ###evaluation
-    evaluation.evaluation_orchestrator()
+    #evaluation.evaluation_orchestrator()
 
 
 if __name__ == "__main__":
