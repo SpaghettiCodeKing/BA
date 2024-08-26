@@ -143,6 +143,7 @@ def evaluation_orchestrator():
     extract_from_prompt()
     extract_from_entity()
     for entities, prompts in zip(values_list_entities, values_list_prompts):
+        
         entities_keys = list(entities.keys())
         prompts_keys = list(prompts.keys())
         # Extracting values from the dictionaries

@@ -8,8 +8,8 @@ If a label is not inclueded in the input, fill the empty strings with "NONE". No
 label: company - The name of the company. Only one is correct
 label: date - The date of the receip. Only one is correct. Format it how it is on the reciept. Do not include the time.
 label: address - The address of the company. Seperate information found on different lines with ','.
-label: total - The total amount of the receip. Only one is correct. Format to 2 decimal places. Do not include the currency symbol."""
-#Now a example document will follow:
+label: total - The total amount of the receip. Only one is correct. Format to 2 decimal places. Do not include the currency symbol.
+Now a example document will follow:"""
     
       explanation_results = "This would be the results of the example document:"
       transition_to_extraction = f"This is the document you must extract the information from: [Image with name: {document}]"
@@ -18,11 +18,13 @@ label: total - The total amount of the receip. Only one is correct. Format to 2 
       prompt = f"{introduction}\n"
     # Loop through each instruction_document and instruction_label
       for i, (instruction_document, instruction_label) in enumerate(zip(instruction_documents, instruction_labels)):
-            prompt += f"{instruction_document}\n{explanation_results}\n{instruction_label}\n"
+            prompt += f"[Image with name: {instruction_document}\n{explanation_results}\n{instruction_label}\n"
             if i < len(instruction_documents) - 1:  # Check if this is not the last iteration
                   prompt += f"{transition_to_next_example}\n"
       prompt +=f"{transition_to_extraction}\n{document}\n{json_to_extract}\n{labels}\n\n"
       #print(prompt)
+      #print(type(document))
+      #print(instruction_documents[0])
       return prompt.strip()
 
 #For text input

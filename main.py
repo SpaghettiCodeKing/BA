@@ -10,7 +10,10 @@ import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import preparation
 
-
+#laptop
+#file_path = r"C:\Users\elias\Desktop\BAImportant.txt"
+#PC
+file_path = r"C:\Users\super161\Desktop\BAImportant.txt"
 with open(file_path, 'r') as file:
         GEMINI = file.read()
 genai.configure(api_key=GEMINI)
@@ -66,12 +69,13 @@ def prompt_runner():
     #PC
     path_latin = r"E:\uni\BA\data\input\latin"
     path_instruction_latin = r"E:\uni\BA\data\input\latin"
-    path_instruction_picture = r"E:\uni\BA\data\input\img\X00016469612.jpg"
+    path_instruction_picture = r"E:\uni\BA\data\input\img"
     path_entity = r"E:\uni\BA\data\input\entities"
     path_feed = r"E:\uni\BA\data\input\feed"
     instruction_documents = []
+    instruction_documents_pictures = []
     instruction_labels = [] 
-    amount_of_instruction_documents = 10
+    amount_of_instruction_documents = 1
 
     #Laptop
     #path_latin = r"C:\Users\elias\Documents\GitHub\BA\data\input\latin"
@@ -85,15 +89,16 @@ def prompt_runner():
     # Get the list of files in the directory
     files = os.listdir(path_entity)
     
-    # Only process the first 'x' files (or fewer if there aren't enough files)
-    """for filename in files[:amount_of_instruction_documents]:
+    # Get the instruction labels
+    for filename in files[:amount_of_instruction_documents]:
         file_path = os.path.join(path_entity, filename)
         
         if os.path.isfile(file_path):
             with open(file_path, 'r') as file:
                 content = file.read()
                 # Append the content to the instruction_documents list
-                instruction_labels.append(content)"""
+                instruction_labels.append(content)
+
     #get the labels for showing the LLM what to extract
     first_entry = files[0]
     first_entry_path = os.path.join(path_entity, first_entry)
@@ -116,8 +121,15 @@ def prompt_runner():
                 content = file.read()
                 # Append the content to the instruction_documents list
                 instruction_documents.append(content)
-    """##as picture
-    #image = Image.open(path_instruction_picture)
+    """
+    ##load instruction documents as pictures
+    files = os.listdir(path_instruction_picture)
+
+    for filename in files[:amount_of_instruction_documents]:
+        file_path = os.path.join(path_instruction_picture, filename)
+        imageInstruction = Image.open(file_path)
+        instruction_documents_pictures.append(imageInstruction)
+        instruction_documents.append(filename)
 
     #load feed
     data_documents = {}
@@ -132,6 +144,7 @@ def prompt_runner():
     
     #with open(path_feed, 'r') as file:
      #   data_document = file.read()
+
     ##as picture
     
     image_files = [os.path.join(path_feed, file) for file in os.listdir(path_feed) if file.endswith((".jpg", ".png", ".jpeg"))]
@@ -151,6 +164,8 @@ def prompt_runner():
         prompt_value = []
         prompt_value.append(prompt.getPrompt(instruction_documents, instruction_labels, key, labels))
         prompt_value.append(data_documents[key])
+        #picture use next line
+        prompt_value.append(instruction_documents_pictures)
         prompts.append({key : prompt_value})
         #print(prompt_value)
     return prompts
@@ -160,7 +175,8 @@ async def prompt_llm(prompt,  time_interval):
     async with semaphore:
         name = list(prompt.keys())[0]
         promptAI = prompt[name][0]   #this is the prompt
-        image = prompt[name][1]  #this is the image
+        image_extract = prompt[name][1]  #this is the image
+        image_instruction = prompt[name][2][0]
         
         generation_config = {
         "temperature": 1,
@@ -173,14 +189,15 @@ async def prompt_llm(prompt,  time_interval):
         model = genai.GenerativeModel(
         model_name="gemini-1.5-pro",
         generation_config=generation_config,
-        safety_settings = {HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE},
+        safety_settings = {HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                           HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE},
         
         )
         chat_session = model.start_chat(
         history=[
         ]
         )
-        answer = chat_session.send_message([promptAI, image])
+        answer = chat_session.send_message([promptAI, image_instruction, image_extract])
         text_response = answer._result.candidates[0].content.parts[0].text
         await asyncio.sleep(time_interval)
         
@@ -198,9 +215,19 @@ async def prompt_orchestrator():
     #first_key = list(first_entry.keys())[0]
     #print(first_entry[first_key])
 
-    batch_size = 25
-    batches = [prompts[i:i + batch_size] for i in range(0, len(prompts) - 23, batch_size)]
-    batches.append(prompts[-23:])  # Add the last batch of 23 prompts
+    batch_size = 5
+    batches = [prompts[i:i + batch_size] for i in range(0, len(prompts), batch_size)]
+
+    # Ensure the last batch is smaller if it's less than batch_size
+    if len(batches[-1]) < batch_size:
+        remaining = len(batches[-1])
+        batches[-1] = prompts[-remaining:]
+
+# If the last batch is part of the earlier slices and it's less than batch_size
+    if len(prompts) % batch_size != 0:
+        remaining = len(prompts) % batch_size
+        batches[-1] = prompts[-remaining:]
+
     time_interval = 60 / 300
     avatiables = []
     print(len(batches))
@@ -226,14 +253,14 @@ async def main():
     #latin_runner()
 
     #######call to make the prompts
-    await prompt_orchestrator()
+    #await prompt_orchestrator()
 
     #preparation.choose_50()
     #preparation.get_matching_pictures()
     #preparation.correct_price_format()
     #preparation.load_and_check_documents()
     ###evaluation
-    #evaluation.evaluation_orchestrator()
+    evaluation.evaluation_orchestrator()
 
 
 if __name__ == "__main__":
