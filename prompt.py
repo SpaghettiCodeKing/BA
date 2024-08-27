@@ -18,10 +18,11 @@ Now a example document will follow:"""
       prompt = f"{introduction}\n"
     # Loop through each instruction_document and instruction_label
       for i, (instruction_document, instruction_label) in enumerate(zip(instruction_documents, instruction_labels)):
-            prompt += f"[Image with name: {instruction_document}\n{explanation_results}\n{instruction_label}\n"
+            prompt += f"[Image with name: {instruction_document}]\n{explanation_results}\n{instruction_label}\n"
             if i < len(instruction_documents) - 1:  # Check if this is not the last iteration
                   prompt += f"{transition_to_next_example}\n"
-      prompt +=f"{transition_to_extraction}\n{document}\n{json_to_extract}\n{labels}\n\n"
+      prompt +=f"{transition_to_extraction}\n{json_to_extract}\n{labels}\n\n"
+      #print(prompt)                      
       #print(prompt)
       #print(type(document))
       #print(instruction_documents[0])

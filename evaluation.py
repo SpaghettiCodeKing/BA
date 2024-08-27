@@ -121,11 +121,12 @@ def clean_strings(strings):
     cleaned_strings = []
     for s in strings:
         # Replace ",," with ","
-        s = s.replace(",,", ",")
-        # Replace multiple white spaces with a single white space
-        s = re.sub(r'\s+', ' ', s)
-        # Append the cleaned string to the list
-        cleaned_strings.append(s.strip())  # .strip() removes leading/trailing whitespace if necessary
+        if s is not None:
+            s = s.replace(",,", ",")
+            # Replace multiple white spaces with a single white space
+            s = re.sub(r'\s+', ' ', s)
+            # Append the cleaned string to the list
+            cleaned_strings.append(s.strip())  # .strip() removes leading/trailing whitespace if necessary
     return cleaned_strings
       
 
