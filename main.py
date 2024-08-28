@@ -84,6 +84,7 @@ Now a example document will follow:"""
     explanation_results = "This would be the results of the example document:"
     #PC
     path_latin = r"E:\uni\BA\data\input\latin"
+    path_ocr = r"E:\uni\BA\data\input\ocr"
     path_instruction_latin = r"E:\uni\BA\data\input\latin"
     path_instruction_picture = r"E:\uni\BA\data\input\img"
     path_entity = r"E:\uni\BA\data\input\entities"
@@ -91,7 +92,7 @@ Now a example document will follow:"""
     instruction_documents = []
     instruction_documents_pictures = []
     instruction_labels = [] 
-    amount_of_instruction_documents = 1
+    amount_of_instruction_documents = 10
 
     #Laptop
     #path_latin = r"C:\Users\elias\Documents\GitHub\BA\data\input\latin"
@@ -138,6 +139,20 @@ Now a example document will follow:"""
                 # Append the content to the instruction_documents list
                 instruction_documents.append(content)
     """
+    ##as OCR
+    # Get the list of files in the directory
+    files = os.listdir(path_ocr)
+    
+    # Only process the first 'x' files (or fewer if there aren't enough files)
+    for filename in files[:amount_of_instruction_documents]:
+        file_path = os.path.join(path_ocr, filename)
+        
+        if os.path.isfile(file_path):
+            with open(file_path, 'r') as file:
+                content = file.read()
+                # Append the content to the instruction_documents list
+                instruction_documents.append(content)
+    """
     ##load instruction documents as pictures
     files = os.listdir(path_instruction_picture)
 
@@ -146,23 +161,26 @@ Now a example document will follow:"""
         imageInstruction = Image.open(file_path)
         instruction_documents_pictures.append(imageInstruction)
         instruction_documents.append(filename)
-
+"""
     #load feed
     data_documents = {}
-    ##as Latin
-    """text_files = [os.path.join(path_feed, file) for file in os.listdir(path_feed) if file.endswith(".txt")]
+    ##as Latin and OCR
+    text_files = [os.path.join(path_feed, file) for file in os.listdir(path_feed) if file.endswith(".txt")]
     
     for file_path in text_files:
         with open(file_path, 'r') as file:
             content = file.read().strip()  # Read the content of the file and strip any extra whitespace
             file_name = os.path.basename(file_path)
-            data_documents[file_name] = content  # Add the content to the dict"""
+            data_documents[file_name] = content  # Add the content to the dict
     
-    #with open(path_feed, 'r') as file:
-     #   data_document = file.read()
-
+    prompts = []
+    for key in data_documents:
+        prompt_value = []
+        prompt_value.append(prompt.getPrompt(instruction_documents, instruction_labels, data_documents[key], labels))
+        prompts.append({key : prompt_value})
+        #print(prompt_value)
     ##as picture
-    
+    """
     image_files = [os.path.join(path_feed, file) for file in os.listdir(path_feed) if file.endswith((".jpg", ".png", ".jpeg"))]
     
     for file_path in image_files:
@@ -199,6 +217,7 @@ Now a example document will follow:"""
             part = {}
             part["mime_type"] = "image/jpeg"
             part["data"] = pil_image_to_base64(value) 
+            #value.show()
             parts.append({"inline_data":part})
             part_labels = {}
             #part_labels["type"] = "text"
@@ -222,6 +241,8 @@ Now a example document will follow:"""
         prompt_value["parts"] = parts
         prompts.append({key : prompt_value})
         #print(prompt_value)
+        """
+
     return prompts
 
 semaphore = asyncio.Semaphore(7)
@@ -241,7 +262,9 @@ async def prompt_llm(prompt,  time_interval):
         model_name="gemini-1.5-pro",
         generation_config=generation_config,
         safety_settings = {HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                           HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE},
+                           HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                           HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                           HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE},
         
         )
         chat_session = model.start_chat(
@@ -304,14 +327,15 @@ async def main():
     #latin_runner()
 
     #######call to make the prompts
-    #await prompt_orchestrator()
+    await prompt_orchestrator()
 
     #preparation.choose_50()
     #preparation.get_matching_pictures()
     #preparation.correct_price_format()
     #preparation.load_and_check_documents()
+    #preparation.remove_box()
     ###evaluation
-    evaluation.evaluation_orchestrator()
+    #evaluation.evaluation_orchestrator()
 
 
 if __name__ == "__main__":

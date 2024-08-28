@@ -22,7 +22,7 @@ def choose_50():
 def get_matching_pictures():
   to_pick_from = r"E:\uni\BA\data\input\feed"
   txt = r"E:\uni\BA\data\input\latinExtract"
-  output = r"E:\uni\BA\data\input\entitiesExtract"
+  output = r"E:\uni\BA\data\output"
   output_prompt_entities = r"E:\uni\BA\data\input\entitiesExtract"
       
   txt_files = {os.path.splitext(f)[0] for f in os.listdir(txt) if os.path.isfile(os.path.join(txt, f)) and f.endswith('.txt')}
@@ -101,3 +101,28 @@ def load_and_check_documents():
             else:
                 print(f"File '{filename}' does not contain a valid dictionary.")
 
+
+def remove_box():
+  input_folder = r"E:\uni\BA\data\input\feed"
+  output_folder = r"E:\uni\BA\data\output"
+
+  for filename in os.listdir(input_folder):
+    input_path = os.path.join(input_folder, filename)
+    output_path = os.path.join(output_folder, filename)
+    print(filename)
+    with open(input_path, 'r') as infile, open(output_path, 'w') as outfile:
+      for line in infile:
+        try:
+          line = line.strip()
+          parts = line.split(',')
+          if len(parts) > 8:
+            # Rejoin the parts after the first 8 items
+            new_line = ','.join(parts[8:])
+            # Write the modified line to the output file
+            outfile.write(new_line + '\n')
+          else:
+            # Write the line as it is if it doesn't have 8 numbers
+            outfile.write(line)
+        except UnicodeDecodeError as e:
+          print(f"Error processing line: {line}")
+          print(f"file: {filename}")
