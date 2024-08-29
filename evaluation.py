@@ -9,6 +9,7 @@ input_folder = r"E:\uni\BA\data\input\feed"
 entity_folder = r"E:\uni\BA\data\input\entitiesExtract"
 values_list_prompts = []
 values_list_entities = []
+name_files = []
 banned_files = []
 
 """
@@ -94,6 +95,7 @@ def extract_from_entity():
                 # Assuming the text content is exactly what you provided earlier
             values = extract_values_from_entity(text_content)
             values_list_entities.append(values)
+            name_files.append(filename)
         else:
             print(f"Skipping file {filename} due to previous errors")
 
@@ -143,7 +145,7 @@ def evaluation_orchestrator():
       
     extract_from_prompt()
     extract_from_entity()
-    for entities, prompts in zip(values_list_entities, values_list_prompts):
+    for entities, prompts,name in zip(values_list_entities, values_list_prompts,name_files):
         
         entities_keys = list(entities.keys())
         prompts_keys = list(prompts.keys())
@@ -174,10 +176,11 @@ def evaluation_orchestrator():
         anls_score_2.append(anls_score(entities.get(key_2, ''), prompts.get(key_2, '')))
         anls_score_3.append(anls_score(entities.get(key_3, ''), prompts.get(key_3, '')))
 
-        """if anls < 0.75:
+        if anls < 0.99:
+            print(name)
             print(entities)
             print(prompts)
-            print(anls)"""
+            print(anls)
         #precision, recall, f1
         # Convert the dictionaries to sets of keys
         gt_keys = set(entities.keys())            
