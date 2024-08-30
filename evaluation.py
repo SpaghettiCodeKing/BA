@@ -81,6 +81,16 @@ def extract_from_prompt():
                     values = None
             
             if values is not None:
+                values["company"] = values.get("company", "").replace("\n", " ")
+                values["address"] = values.get("address", "").replace(" , ", ", ")
+                #delete telephone number
+                text = values["address"]
+                cleaned_text = re.sub(r'TEL NO\.:.*', '', text)
+                values["address"] = cleaned_text
+                #delete everything in brackets
+                """text = values["address"]
+                cleaned_text = re.sub(r'\(.*\)$', '', text)
+                values["address"] = cleaned_text"""
                 values_list_prompts.append(values)
       
 
@@ -92,8 +102,11 @@ def extract_from_entity():
             if os.path.isfile(file_path):
                 with open(file_path, 'r') as file:
                     text_content = file.read()
-                # Assuming the text content is exactly what you provided earlier
+                
             values = extract_values_from_entity(text_content)
+            #switch from SANYU STATIONERY SHOP to SANYU SUPPLY SDN BHD because not in instruction data and it is the correct owned by company...
+            if values["company"] =="SANYU STATIONERY SHOP":
+                values["company"] = "SANYU SUPPLY SDN BHD"
             values_list_entities.append(values)
             name_files.append(filename)
         else:
@@ -176,11 +189,16 @@ def evaluation_orchestrator():
         anls_score_2.append(anls_score(entities.get(key_2, ''), prompts.get(key_2, '')))
         anls_score_3.append(anls_score(entities.get(key_3, ''), prompts.get(key_3, '')))
 
-        if anls < 0.99:
+        if "FAMILYMART" in entities["company"]:
+            print(name)
+            print(entities)
+            print(prompts)  
+            print(anls) 
+        """if anls < 0.76:
             print(name)
             print(entities)
             print(prompts)
-            print(anls)
+            print(anls)"""
         #precision, recall, f1
         # Convert the dictionaries to sets of keys
         gt_keys = set(entities.keys())            
@@ -198,21 +216,21 @@ def evaluation_orchestrator():
         f1.append(f1_score(gt_labels, ev_labels, zero_division=0))
     print(len(values_list_prompts))
     print(" anls* final average score over all labels:")
-    print(round(sum(anls_scores_all_labels)/len(anls_scores_all_labels),2))
+    print(round(sum(anls_scores_all_labels)/len(anls_scores_all_labels),5))
     print(" anls* final average score for company:")
-    print(round(sum(anls_score_0)/len(anls_score_0),2))
+    print(round(sum(anls_score_0)/len(anls_score_0),5))
     print(" anls* final average score for label date:")
-    print(round(sum(anls_score_1)/len(anls_score_1),2))
+    print(round(sum(anls_score_1)/len(anls_score_1),5))
     print(" anls* final average score for label address:")
-    print(round(sum(anls_score_2)/len(anls_score_2),2))
+    print(round(sum(anls_score_2)/len(anls_score_2),5))
     print(" anls* final average score for label total:")
-    print(round(sum(anls_score_3)/len(anls_score_3),2))
+    print(round(sum(anls_score_3)/len(anls_score_3),5))
     print("precision:")
-    print(round(sum(precision)/len(precision),2))
+    print(round(sum(precision)/len(precision),5))
     print("recall:")
-    print(round(sum(recall)/len(recall),2))
+    print(round(sum(recall)/len(recall),5))
     print("f1:")
-    print(round(sum(f1)/len(f1),2))
+    print(round(sum(f1)/len(f1),5))
 
             
       
