@@ -184,21 +184,29 @@ def evaluation_orchestrator():
         if not set(prompts.keys()).issubset(allowed_keys):
             print(dictionary)
             #anls computations
+        if prompts.get(key_0, '') != None:
+            prompts[key_0] = prompts.get(key_0, '').upper()
+        if prompts.get(key_1, '') != None:
+            prompts[key_1] = prompts.get(key_1, '').upper()
+        if prompts.get(key_2, '') != None:
+            prompts[key_2] = prompts.get(key_2, '').upper()
+        if prompts.get(key_3, '') != None: 
+            prompts[key_3] = prompts.get(key_3, '').upper() 
         anls_score_0.append(anls_score(entities.get(key_0, ''), prompts.get(key_0, '')))
         anls_score_1.append(anls_score(entities.get(key_1, ''), prompts.get(key_1, '')))
         anls_score_2.append(anls_score(entities.get(key_2, ''), prompts.get(key_2, '')))
         anls_score_3.append(anls_score(entities.get(key_3, ''), prompts.get(key_3, '')))
 
-        if "FAMILYMART" in entities["company"]:
+        """if "FAMILYMART" in entities["company"]:
             print(name)
             print(entities)
             print(prompts)  
-            print(anls) 
-        """if anls < 0.76:
+            print(anls)""" 
+        if anls < 0.76:
             print(name)
             print(entities)
             print(prompts)
-            print(anls)"""
+            print(anls)
         #precision, recall, f1
         # Convert the dictionaries to sets of keys
         gt_keys = set(entities.keys())            
@@ -216,21 +224,21 @@ def evaluation_orchestrator():
         f1.append(f1_score(gt_labels, ev_labels, zero_division=0))
     print(len(values_list_prompts))
     print(" anls* final average score over all labels:")
-    print(round(sum(anls_scores_all_labels)/len(anls_scores_all_labels),5))
+    print(round(sum(anls_scores_all_labels)/len(anls_scores_all_labels),2))
     print(" anls* final average score for company:")
-    print(round(sum(anls_score_0)/len(anls_score_0),5))
+    print(round(sum(anls_score_0)/len(anls_score_0),2))
     print(" anls* final average score for label date:")
-    print(round(sum(anls_score_1)/len(anls_score_1),5))
+    print(round(sum(anls_score_1)/len(anls_score_1),2))
     print(" anls* final average score for label address:")
-    print(round(sum(anls_score_2)/len(anls_score_2),5))
+    print(round(sum(anls_score_2)/len(anls_score_2),2))
     print(" anls* final average score for label total:")
-    print(round(sum(anls_score_3)/len(anls_score_3),5))
+    print(round(sum(anls_score_3)/len(anls_score_3),2))
     print("precision:")
-    print(round(sum(precision)/len(precision),5))
+    print(round(sum(precision)/len(precision),2))
     print("recall:")
-    print(round(sum(recall)/len(recall),5))
+    print(round(sum(recall)/len(recall),2))
     print("f1:")
-    print(round(sum(f1)/len(f1),5))
+    print(round(sum(f1)/len(f1),2))
 
             
       
