@@ -48,14 +48,11 @@ def latin_runner():
             bbox, text  = Latin.split_after_eighth_comma(line,box.FileName)
             parsed_boxes.append({"text": text, "bbox": bbox})
 
-        
-        # Now you can work with the `image` object, which is an instance of the PIL.Image.JpegImageFile class
+     
         # For example, you can access its properties like width and height
         width, height = image.size
         img_size = (width, height)
-        #print(f"Width: {img_size[0]}, Height: {img_size[1]}")
-        #print(box.read())
-        # You can also perform various operations on the image, such as resizing, cropping, or applying filters
+        
         # Once you are done with the image, don't forget to close it
         full_output_path = os.path.join(output, box.FileName)
     
@@ -265,7 +262,6 @@ async def prompt_llm(prompt,  time_interval):
                            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
                            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
                            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE},
-        
         )
         chat_session = model.start_chat(
         history=[
@@ -335,7 +331,8 @@ async def main():
     #preparation.load_and_check_documents()
     #preparation.remove_box()
     ###evaluation
-    evaluation.evaluation_orchestrator()
+    #evaluation.evaluation_orchestrator()
+    
 
 
 if __name__ == "__main__":

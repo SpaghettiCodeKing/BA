@@ -202,11 +202,11 @@ def evaluation_orchestrator():
             print(entities)
             print(prompts)  
             print(anls)""" 
-        if anls < 0.76:
+        """if anls < 0.76:
             print(name)
             print(entities)
             print(prompts)
-            print(anls)
+            print(anls)"""
         #precision, recall, f1
         # Convert the dictionaries to sets of keys
         gt_keys = set(entities.keys())            
