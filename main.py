@@ -318,6 +318,37 @@ async def prompt_orchestrator():
         avatiables = []
 
 async def main():
+    batch_size = 5
+    batches = [prompts[i:i + batch_size] for i in range(0, len(prompts), batch_size)]
+
+    # Ensure the last batch is smaller if it's less than batch_size
+    if len(batches[-1]) < batch_size:
+        remaining = len(batches[-1])
+        batches[-1] = prompts[-remaining:]
+
+# If the last batch is part of the earlier slices and it's less than batch_size
+    if len(prompts) % batch_size != 0:
+        remaining = len(prompts) % batch_size
+        batches[-1] = prompts[-remaining:]
+
+    time_interval = 60 / 300
+    avatiables = []
+    print(len(batches))
+# Process each batch separately
+    for batch in batches:
+        avatiables_batch = await asyncio.gather(*(prompt_llm(prompt, time_interval) for prompt in batch))
+        avatiables.extend(avatiables_batch) 
+        print("batch done") 
+        await asyncio.sleep(5)
+        for entry in avatiables:
+            key = next(iter(entry))
+            
+            value = entry[key]
+            key = key.replace(".jpg", ".txt")
+            output_file_path = os.path.join(output_path, key)
+            with open(output_file_path, 'w') as output_file:
+                output_file.write(str(value))
+        avatiables = []
     
     #######call to make all latin prompts
     #latin_runner()
