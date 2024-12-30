@@ -7,8 +7,8 @@ This project is designed to conduct experiments for Visually Rich Document Under
 Before running the project, ensure the following:
 **Data Acquisition:**
 Download the required dataset:
-- From Google Drive (insert link).
-- Or from Kaggle (insert link).
+- From Google Drive: https://drive.google.com/drive/folders/1E5WK4gUGdLJocXWtTS-3PfI0Q_C_lpYq?usp=sharing there under backup>input one can find the used splits from the experiment.
+- Or from Kaggle: https://www.kaggle.com/datasets/urbikn/sroie-datasetv2
 
 ### How to run
 To run the application follow these steps:
